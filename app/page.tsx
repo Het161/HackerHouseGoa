@@ -20,9 +20,15 @@ import type { CardFields, RenderFormat, RenderInput, SourceImage, Transform } fr
 
 type Phase = "idle" | "loading" | "editing" | "result";
 
+/**
+ * Builder ID leads. It is the primary deliverable and the only format with a
+ * form behind it — landing on the PFP frame instead hid every field (role,
+ * college, phone) behind a tab people did not know to press, and they concluded
+ * the fields simply did not exist.
+ */
 const FORMATS: ReadonlyArray<{ id: RenderFormat; label: string; size: string }> = [
-  { id: "pfp", label: "PFP Frame", size: "1080 × 1080" },
   { id: "card", label: "Builder ID", size: "1080 × 1350" },
+  { id: "pfp", label: "PFP Frame", size: "1080 × 1080" },
 ];
 
 const PRIMARY_BUTTON =
@@ -32,7 +38,7 @@ const GHOST_BUTTON =
 
 export default function Page() {
   const [phase, setPhase] = useState<Phase>("idle");
-  const [format, setFormat] = useState<RenderFormat>("pfp");
+  const [format, setFormat] = useState<RenderFormat>("card");
   const [source, setSource] = useState<SourceImage | null>(null);
   const [loadStage, setLoadStage] = useState<LoadStage | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -368,6 +374,21 @@ export default function Page() {
                 <p className="mt-1 font-data text-[10px] leading-snug text-goa-ink/55">
                   Used for the file name and your caption — the frame itself stays text-free.
                 </p>
+                {/* Without this, the PFP tab looks like the app simply forgot to ask
+                    for role / college / phone. Say where they went, and make it a
+                    button rather than an instruction to go hunting. */}
+                <button
+                  type="button"
+                  onClick={() => setFormat("card")}
+                  className="mt-3 flex min-h-[44px] w-full items-center justify-between gap-2 rounded-sm border-2 border-dashed border-goa-red/60 px-3 text-left"
+                >
+                  <span className="font-data text-[10px] leading-snug text-goa-ink/70">
+                    Need role, college &amp; phone on it?
+                  </span>
+                  <span className="shrink-0 font-data text-[10px] font-bold uppercase tracking-[0.14em] text-goa-red">
+                    Builder ID →
+                  </span>
+                </button>
               </div>
             ) : null}
 
