@@ -40,14 +40,24 @@ export interface Rect {
   h: number;
 }
 
-/** The user-supplied and auto-generated text on the Builder ID card. */
+/** The user-supplied and auto-generated text on the event ID card. */
 export interface CardFields {
   /** Required. Rendered uppercase in the display face. */
   name: string;
-  /** Free text, e.g. "Next.js + Solidity". Optional. */
+  /** Role in the team, e.g. "DevOps Engineer". Optional. */
   role: string;
-  /** Bare handle without the "@" — rendered as "@handle". Optional. */
-  handle: string;
+  /** College / institution, e.g. "VJTI Mumbai". Optional. */
+  college: string;
+  /**
+   * Phone number, digits only, as typed.
+   *
+   * PRIVACY: this is collected in full so an organiser can match a person at
+   * check-in, but the card only ever prints the last two digits — see
+   * `maskPhone` in lib/titles.ts. The exported PNG is designed to be posted
+   * publicly, and a full number on a public graphic is a number handed to
+   * strangers. Never render this field raw.
+   */
+  phone: string;
   /** Auto-generated builder title, e.g. "Chai-Powered Merge Monk". */
   title: string;
   /** 1 … COHORT_SIZE. */

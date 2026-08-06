@@ -40,7 +40,9 @@ export default function Page() {
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
-  const [handle, setHandle] = useState("");
+  const [college, setCollege] = useState("");
+  /** Held in full for the form; only `maskPhone` output ever reaches the canvas. */
+  const [phone, setPhone] = useState("");
   /** 0 until the user rolls the dice; a new name resets it (see `applyName`). */
   const [salt, setSalt] = useState(0);
   const [serverBuilderNo, setServerBuilderNo] = useState<number | null>(null);
@@ -61,8 +63,8 @@ export default function Page() {
   const builderNo = serverBuilderNo ?? fallbackBuilderNumber(name);
 
   const fields = useMemo<CardFields>(
-    () => ({ name, role, handle, title, builderNo }),
-    [name, role, handle, title, builderNo],
+    () => ({ name, role, college, phone, title, builderNo }),
+    [name, role, college, phone, title, builderNo],
   );
 
   const renderInput = useMemo<RenderInput | null>(
@@ -181,7 +183,8 @@ export default function Page() {
     (next: CardFields) => {
       if (next.name !== name) applyName(next.name);
       setRole(next.role);
-      setHandle(next.handle);
+      setCollege(next.college);
+      setPhone(next.phone);
     },
     [applyName, name],
   );

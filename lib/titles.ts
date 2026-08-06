@@ -212,6 +212,34 @@ export function fallbackBuilderNumber(name: string): number {
   return (hashString(name) % COHORT_SIZE) + 1;
 }
 
+/* ------------------------------------------------------------------- phone */
+
+/** Digits only, capped at 15 (E.164's maximum national-number length). */
+export function sanitizePhone(raw: string): string {
+  return raw.replace(/\D/g, "").slice(0, 15);
+}
+
+/**
+ * What the card is allowed to print: the last two digits, everything else
+ * bulleted out — `"9876543298"` → `"••••98"`.
+ *
+ * The exported PNG exists to be posted publicly. A full phone number on a
+ * public graphic is a number handed to every stranger who sees the post, so
+ * masking happens at the render boundary and there is deliberately no way to
+ * ask this module for the unmasked value. An organiser checking someone in
+ * still gets enough to disambiguate two people with the same name.
+ *
+ * Returns "" for empty input so the compositor can collapse the whole row.
+ */
+export function maskPhone(raw: string): string {
+  const digits = sanitizePhone(raw);
+  if (digits.length === 0) return "";
+  // Too short to mask meaningfully — bullet the lot rather than leak a 2-digit
+  // number that IS the whole number.
+  if (digits.length <= 2) return "•".repeat(digits.length);
+  return `${"•".repeat(Math.min(4, digits.length - 2))}${digits.slice(-2)}`;
+}
+
 /** `"BUILDER #041 / 247"` — the badge line on the ID card. */
 export function formatBuilderNumber(n: number): string {
   // Guard against NaN / fractional values arriving from a JSON payload; the

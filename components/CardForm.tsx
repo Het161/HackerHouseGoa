@@ -2,29 +2,13 @@
 
 import { useId } from "react";
 
-import { formatBuilderNumber } from "@/lib/titles";
+import { formatBuilderNumber, maskPhone, sanitizePhone } from "@/lib/titles";
 import type { CardFields } from "@/lib/types";
 
 export interface CardFormProps {
   fields: CardFields;
   onChange: (next: CardFields) => void;
   onReroll: () => void;
-}
-
-/**
- * X handles are `[A-Za-z0-9_]{1,15}`. People paste "@name", "twitter.com/name"
- * or a name with a trailing space, and any of those would render as a broken
- * handle on the badge — so normalise on every keystroke rather than validating
- * at submit time (there is no submit).
- */
-export function sanitizeHandle(raw: string): string {
-  // lastIndexOf returns -1 when there is no slash, so slice(0) keeps the whole
-  // string; when someone pastes "x.com/ada" this keeps just "ada".
-  const lastSegment = raw.slice(raw.lastIndexOf("/") + 1);
-  return lastSegment
-    .replace(/^@+/, "")
-    .replace(/[^A-Za-z0-9_]/g, "")
-    .slice(0, 15);
 }
 
 const LABEL = "block font-data text-[11px] uppercase tracking-[0.18em] text-goa-ink/65";
@@ -35,11 +19,13 @@ export default function CardForm({ fields, onChange, onReroll }: CardFormProps) 
   const uid = useId();
   const nameId = `${uid}-name`;
   const roleId = `${uid}-role`;
-  const handleId = `${uid}-handle`;
+  const collegeId = `${uid}-college`;
+  const phoneId = `${uid}-phone`;
+  const phoneHintId = `${uid}-phone-hint`;
 
   return (
     <section className="mt-4 rounded-md border-[3px] border-goa-cream bg-goa-cream p-4 text-goa-ink shadow-[5px_5px_0_0_var(--color-goa-green-deep)]">
-      <p className="font-data text-[10px] uppercase tracking-[0.24em] text-goa-red">Builder details</p>
+      <p className="font-data text-[10px] uppercase tracking-[0.24em] text-goa-red">Your details</p>
 
       <div className="mt-3">
         <label htmlFor={nameId} className={LABEL}>
@@ -62,44 +48,74 @@ export default function CardForm({ fields, onChange, onReroll }: CardFormProps) 
 
       <div className="mt-3">
         <label htmlFor={roleId} className={LABEL}>
-          Stack / Role
+          Role in the team
         </label>
         <input
           id={roleId}
           type="text"
           value={fields.role}
           maxLength={32}
-          autoCapitalize="none"
+          autoCapitalize="words"
           autoCorrect="off"
           spellCheck={false}
-          placeholder="Next.js + Solidity"
+          placeholder="DevOps Engineer"
           className={`${INPUT} font-data`}
           onChange={(event) => onChange({ ...fields, role: event.target.value })}
         />
       </div>
 
       <div className="mt-3">
-        <label htmlFor={handleId} className={LABEL}>
-          X handle
+        <label htmlFor={collegeId} className={LABEL}>
+          College
         </label>
-        <div className="mt-1 flex items-center rounded-sm border-2 border-goa-ink/25 bg-white focus-within:border-goa-red">
-          <span aria-hidden="true" className="pl-3 font-data text-base text-goa-ink/40">
-            @
-          </span>
-          <input
-            id={handleId}
-            type="text"
-            inputMode="text"
-            value={fields.handle}
-            maxLength={15}
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="yourhandle"
-            className="w-full min-w-0 rounded-sm bg-transparent px-2 py-2 font-data text-base text-goa-ink placeholder:text-goa-ink/35"
-            onChange={(event) => onChange({ ...fields, handle: sanitizeHandle(event.target.value) })}
-          />
-        </div>
+        <input
+          id={collegeId}
+          type="text"
+          value={fields.college}
+          maxLength={34}
+          autoCapitalize="words"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="VJTI Mumbai"
+          className={`${INPUT} font-data`}
+          onChange={(event) => onChange({ ...fields, college: event.target.value })}
+        />
+      </div>
+
+      <div className="mt-3">
+        <label htmlFor={phoneId} className={LABEL}>
+          Phone
+        </label>
+        <input
+          id={phoneId}
+          type="tel"
+          // inputMode + pattern together are what actually summon the numeric
+          // keypad across iOS and Android; type="tel" alone is unreliable.
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={fields.phone}
+          maxLength={15}
+          autoComplete="tel"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="9876543210"
+          aria-describedby={phoneHintId}
+          className={`${INPUT} font-data tracking-[0.08em]`}
+          onChange={(event) => onChange({ ...fields, phone: sanitizePhone(event.target.value) })}
+        />
+        <p id={phoneHintId} className="mt-1 font-data text-[11px] leading-snug text-goa-ink/60">
+          {fields.phone.length > 0 ? (
+            <>
+              Your card will show{" "}
+              <span className="font-semibold tracking-[0.12em] text-goa-ink">
+                {maskPhone(fields.phone)}
+              </span>{" "}
+              — never the full number.
+            </>
+          ) : (
+            <>Only the last 2 digits are printed on the card, so it&rsquo;s safe to post.</>
+          )}
+        </p>
       </div>
 
       <div className="mt-4 flex items-stretch gap-2">

@@ -31,7 +31,7 @@ import {
 import { CARD, COLORS, EVENT, FONTS, OG, PFP, TINTS } from "./brand";
 import { ensureFontsReady } from "./fonts";
 import { drawPhoto } from "./transform";
-import { formatBuilderNumber } from "./titles";
+import { formatBuilderNumber, maskPhone } from "./titles";
 import type { Rect, RenderFormat, RenderInput } from "./types";
 
 const TAU = Math.PI * 2;
@@ -64,18 +64,21 @@ const PFP_BAND = PFP_OUTER_R - PFP_DISC_R; // 143.1
  *   20   header bar starts        ┐ 166 tall
  *   186  header bar ends          ┘
  *   202  wave rule
- *   217  photo block top (tilted + bordered)
- *   ~712 photo block bottom incl. drop shadow
- *   792  name baseline            ← floats down when rows collapse
- *   824  title stamp box top (68 tall)
- *   936  first data divider
- *   1052 data rows end (2 × 58)
- *   1092 cohort baseline
- *   1160 builder-number baseline
- *   1188 perforation
+ *   216  photo block top (tilted + bordered)
+ *   ~690 photo block bottom incl. drop shadow
+ *   764  name baseline            ← floats down when rows collapse
+ *   792  title stamp box top (64 tall)
+ *   892  first data divider
+ *   1063 data rows end (3 × 56)
+ *   1100 cohort baseline
+ *   1166 builder-number baseline
+ *   1190 perforation
  *   1206 footer strip starts      ┐ 124 tall
  *   1330 footer strip ends        ┘
  *   1350 border bottom
+ *
+ * Rebudgeted from two data rows to three (ROLE / COLLEGE / PHONE) — the photo
+ * lost 25px of height and the name/stamp block tightened to pay for it.
  */
 const CARD_L = {
   border: 20,
@@ -88,7 +91,7 @@ const CARD_L = {
   datesBaseline: 158,
   waveY: 202,
   /** Photo window in UNROTATED design space — this is what the editor drags in. */
-  photo: { x: 290, y: 236, w: 500, h: 430 } as Rect,
+  photo: { x: 290, y: 236, w: 500, h: 405 } as Rect,
   photoTilt: -2 * DEG,
   photoBorder: 20,
   photoRadius: 26,
@@ -96,16 +99,16 @@ const CARD_L = {
   sunCx: 540,
   sunCy: 296,
   sunR: 408,
-  nameBaseline: 792,
+  nameBaseline: 764,
   nameMaxWidth: 900,
-  stampGap: 32,
-  stampH: 68,
-  dividerGap: 44,
-  rowH: 58,
-  maxRows: 2,
-  cohortBaseline: 1092,
-  numberBaseline: 1160,
-  perfY: 1188,
+  stampGap: 28,
+  stampH: 64,
+  dividerGap: 36,
+  rowH: 56,
+  maxRows: 3,
+  cohortBaseline: 1100,
+  numberBaseline: 1166,
+  perfY: 1190,
   footerTop: 1206,
   footerBottom: 1330,
 } as const;
@@ -560,10 +563,12 @@ function drawCard(ctx: CanvasRenderingContext2D, input: RenderInput): void {
 
   // 7 — collapsible data rows decide how far the name block floats down.
   const rows: DataRow[] = [];
-  if (has(fields.role)) rows.push({ label: "STACK", value: fields.role.trim() });
-  if (has(fields.handle)) {
-    rows.push({ label: "HANDLE", value: `@${fields.handle.trim().replace(/^@+/, "")}` });
-  }
+  if (has(fields.role)) rows.push({ label: "ROLE", value: fields.role.trim() });
+  if (has(fields.college)) rows.push({ label: "COLLEGE", value: fields.college.trim() });
+  // PRIVACY: only ever the masked form reaches the canvas. This card is built to
+  // be posted publicly, so the full number must not exist anywhere in the PNG.
+  const phone = maskPhone(fields.phone);
+  if (has(phone)) rows.push({ label: "PHONE", value: phone });
   const title = fields.title.trim();
   const freed =
     (CARD_L.maxRows - rows.length) * CARD_L.rowH +

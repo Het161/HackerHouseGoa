@@ -4,7 +4,7 @@
 
 # FrameInGoa
 
-**One photo → a branded Hacker House Goa 2026 profile frame *and* a Builder ID card.**
+**Your details + a photo → a Hacker House Goa 2026 event ID card, *and* a branded profile frame.**
 Two taps. No login. Nothing leaves your phone until you choose to share.
 
 `#FrameInGoa`
@@ -27,9 +27,14 @@ Two taps. No login. Nothing leaves your phone until you choose to share.
 <table>
 <tr>
 <td width="42%" align="center"><img src="docs/pfp.png" width="300" alt="1080×1080 profile frame"><br><sub><b>Format A — PFP Frame</b><br>1080 × 1080 · circular crop · legible at 48px</sub></td>
-<td width="58%" align="center"><img src="docs/card.jpg" width="330" alt="1080×1350 Builder ID card"><br><sub><b>Format B — Builder ID Card</b><br>1080 × 1350 · 4:5, full-bleed in the X feed</sub></td>
+<td width="58%" align="center"><img src="docs/card.jpg" width="330" alt="1080×1350 Builder ID card showing name, role, college and a masked phone number"><br><sub><b>Format B — Builder ID Card</b><br>1080 × 1350 · 4:5, full-bleed in the X feed</sub></td>
 </tr>
 </table>
+
+The ID card takes **photo · name · role in the team · college · phone**. Rows collapse when a field is left blank, so a sparse card still looks composed rather than half-empty.
+
+> [!IMPORTANT]
+> **The phone number is never printed in full.** The form collects it so an organiser can match a person at check-in, but the card renders only the last two digits — `••••10`. This graphic is built to be posted publicly, and a full number on a public image is a number handed to every stranger who sees the post. Masking happens at the render boundary in [`maskPhone`](lib/titles.ts), and there is deliberately no code path that draws the raw value.
 
 And a third the user never sees — a 1200×630 Open Graph variant, composed **client-side** from the same canvas, so a shared link unfurls with the actual card instead of a blank thumbnail:
 
@@ -235,6 +240,11 @@ Rozha One and Yatra One ship split Latin/Devanagari subsets, registered under on
 `titleFor(name)` is FNV-1a over an NFC-normalised, case-folded name, with a murmur3 finalizer decorrelating the adjective and role picks. The same name yields the same title on every device, forever — that is the delight. A 🎲 walks a salt forward until the words visibly change.
 
 </td></tr>
+<tr><td><b>The phone number is masked at the render boundary</b></td><td>
+
+Not in the form, not on submit — in `maskPhone`, the only function the compositor is given. `CardFields.phone` holds the full value for the form's own use, but nothing between it and the canvas can print more than the last two digits. Making it a property of the render path rather than a validation rule means a future field row cannot accidentally reintroduce the leak.
+
+</td></tr>
 <tr><td><b>Zero required configuration</b></td><td>
 
 Every env var is optional. No Blob token → `/api/cards` returns a clean **503** and the UI falls back to routes ① and ③. No KV → the builder number falls back to `(hash(name) % 247) + 1`, which is stable across reloads so a user who exports twice gets the same badge.
@@ -249,16 +259,22 @@ Every env var is optional. No Blob token → `/api/cards` returns a clean **503*
 Every number below came from driving the real app in headless Chromium against a production build.
 
 ```
-  mobile @360px ······ 12/12   no horizontal overflow · every tap target ≥ 44px
-  desktop + API ······ 12/12   drag-drop · 503 not 500 · 405 on GET · /c/[id] 404s bad ids
-  pure logic ········· 25/25   caption invariant · title determinism · slug fallbacks
+  browser suite ······ 23/23   360px overflow · 44px targets · every field labelled
+                               503-not-500 · 405 on GET · /c/[id] 404s bad ids
+  phone masking ······ 13/13   swept every input length 3–15, no leak possible
+  caption + titles ··· 25/25   #FrameInGoa invariant · determinism · slug fallbacks
   typecheck ·········· clean   strict + noUncheckedIndexedAccess
   taps to result ····· 2       (spec allowed 3)
   first load JS ······ 119 kB  WASM decoder confirmed split out
   export size ········ 1080×1350 verified byte-level on the downloaded PNG
 ```
 
-`#FrameInGoa` is asserted present across **every** caption branch — including the truncation path and all 247 builder numbers. The submission is invalid without it, so it is a tested invariant rather than a string literal someone hopes stays put.
+Two of those are worth calling out because they are the ones that would be embarrassing to get wrong:
+
+- **`grep` the exported PNG for the phone digits — they are not there.** Not the visible pixels, not the metadata. Asserted on the actual downloaded bytes, not on the input.
+- **`#FrameInGoa` survives every caption branch**, including the truncation path and all 247 builder numbers. The submission is invalid without it, so it is a tested invariant rather than a string someone hopes stays put.
+
+The caption that goes out with every post:
 
 ```
 Locked in for Hacker House Goa 🌴 Builder #041/247 reporting.
