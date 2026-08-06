@@ -25,7 +25,18 @@ import "./globals.css";
  * missing its scheme ("frameingoa.vercel.app") throws identically. So validate,
  * matching how `siteUrl()` in lib/share.ts already treats a blank value.
  */
-const FALLBACK_SITE_URL = "https://frameingoa.vercel.app";
+/**
+ * NEVER hardcode a real third-party hostname here. An earlier version defaulted
+ * to a specific `*.vercel.app` name that turned out to belong to somebody else's
+ * project — which would have pointed our og:image and canonical URL at a
+ * stranger's site on any deploy that forgot to set NEXT_PUBLIC_SITE_URL.
+ *
+ * Vercel injects VERCEL_PROJECT_PRODUCTION_URL (hostname only, no scheme)
+ * automatically, so the correct production URL is derivable with zero config on
+ * the platform we deploy to. Localhost is the last resort and is, at worst,
+ * obviously wrong rather than quietly pointing somewhere real.
+ */
+const LOCAL_FALLBACK = "http://localhost:3000";
 
 function resolveSiteUrl(): URL {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -33,10 +44,19 @@ function resolveSiteUrl(): URL {
     try {
       return new URL(configured);
     } catch {
-      /* Malformed — fall through to the literal default rather than crash. */
+      /* Malformed — fall through rather than crash the build. */
     }
   }
-  return new URL(FALLBACK_SITE_URL);
+  // Vercel gives this as a bare hostname, e.g. "frameingoa-app.vercel.app".
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercelHost) {
+    try {
+      return new URL(`https://${vercelHost.replace(/^https?:\/\//, "")}`);
+    } catch {
+      /* fall through */
+    }
+  }
+  return new URL(LOCAL_FALLBACK);
 }
 
 const SITE_URL = resolveSiteUrl();

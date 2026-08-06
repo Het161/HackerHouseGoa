@@ -21,8 +21,17 @@ import type { CardsResponse, RenderFormat } from "@/lib/types";
 
 /* ------------------------------------------------------------------- config */
 
-/** Used when neither the browser nor NEXT_PUBLIC_SITE_URL can tell us where we live. */
-const FALLBACK_SITE = "https://frameingoa.vercel.app";
+/**
+ * Last-resort origin, used only when neither the browser nor
+ * NEXT_PUBLIC_SITE_URL can say where we live.
+ *
+ * Deliberately localhost and NOT a real `*.vercel.app` name. A previous version
+ * hardcoded one that turned out to be another person's live project, which
+ * would have put THEIR url in our share captions. In practice this constant is
+ * unreachable in the browser — `window.location.origin` always wins, so a real
+ * user's caption is always correct even with zero configuration.
+ */
+const FALLBACK_SITE = "http://localhost:3000";
 
 /**
  * Caption budget in UTF-16 units, measured BEFORE the share URL is appended as a

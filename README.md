@@ -278,7 +278,7 @@ The caption that goes out with every post:
 
 ```
 Locked in for Hacker House Goa 🌴 Builder #041/247 reporting.
-Make yours → https://frameingoa.vercel.app #FrameInGoa @247pmstudio
+Make yours → https://your-project.vercel.app #FrameInGoa @247pmstudio
 ```
 
 ---

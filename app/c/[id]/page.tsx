@@ -18,7 +18,8 @@ export const dynamic = "force-dynamic";
 /** Matches the ids /api/cards mints — also a cheap guard against path traversal. */
 const ID_PATTERN = /^[A-Za-z0-9_-]{6,32}$/;
 
-const FALLBACK_SITE_URL = "https://frameingoa.vercel.app";
+/** Localhost, never a real third-party host — see the note in app/layout.tsx. */
+const LOCAL_FALLBACK = "http://localhost:3000";
 
 /**
  * `??` only substitutes for an *unset* variable. A declared-but-empty
@@ -33,10 +34,21 @@ function resolveSiteUrl(): string {
     try {
       return new URL(configured).toString().replace(/\/+$/, "");
     } catch {
-      /* Malformed — fall through to the literal default. */
+      /* Malformed — fall through. */
     }
   }
-  return FALLBACK_SITE_URL;
+  // Injected by Vercel as a bare hostname, so production is correct unconfigured.
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercelHost) {
+    try {
+      return new URL(`https://${vercelHost.replace(/^https?:\/\//, "")}`)
+        .toString()
+        .replace(/\/+$/, "");
+    } catch {
+      /* fall through */
+    }
+  }
+  return LOCAL_FALLBACK;
 }
 
 const SITE_URL = resolveSiteUrl();
