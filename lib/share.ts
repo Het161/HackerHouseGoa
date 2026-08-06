@@ -88,6 +88,18 @@ function stripTrailingSlash(url: string): string {
 
 /* ------------------------------------------------------------------ caption */
 
+export interface CaptionOptions {
+  /**
+   * Whether the caption should carry the site URL in its own text.
+   *
+   * FALSE for the X web intent: `intent/post` appends its `url` parameter to
+   * the tweet body itself, so a caption that also contains the URL produces it
+   * twice in the composer. TRUE everywhere else (clipboard, Web Share `text`),
+   * where nothing else is going to supply a link.
+   */
+  includeUrl?: boolean;
+}
+
 /**
  * The share caption. One voice, one hashtag, everywhere.
  *
@@ -95,11 +107,17 @@ function stripTrailingSlash(url: string): string {
  * `formatBuilderNumber` in lib/titles.ts ("#041") without either file having to
  * know about the other.
  */
-export function buildCaption(builderNo: number, site: string): string {
+export function buildCaption(builderNo: number, site: string, options: CaptionOptions = {}): string {
+  const { includeUrl = true } = options;
   const n = padBuilderNo(builderNo);
   const where = stripTrailingSlash(site.trim());
 
-  const head = `Locked in for Hacker House Goa 🌴 Builder #${n}/${COHORT_SIZE} reporting. Make yours → ${where}`;
+  const opening = `Locked in for Hacker House Goa 🌴 Builder #${n}/${COHORT_SIZE} reporting.`;
+  // "Make yours →" only earns its arrow when a URL follows it in this string.
+  // For the intent variant X appends the link after the whole caption, so the
+  // pointer would aim at the hashtag instead — drop it and let the appended
+  // URL close the post on its own.
+  const head = includeUrl ? `${opening} Make yours → ${where}` : opening;
   // The handle is nice-to-have; the hashtag is not negotiable, so they trim in
   // that order.
   const optionalTail = ` ${EVENT.handle}`;

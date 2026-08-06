@@ -101,7 +101,9 @@ export default function ResultActions({ format, input, onToast }: ResultActionsP
   /* ------------------------------------------------------------- route 1 */
   const handlePost = useCallback(() => {
     const site = siteUrl();
-    const text = buildCaption(input.fields.builderNo, site);
+    // No URL in the text: xIntentUrl passes one as `url`, and X appends that to
+    // the tweet body. Including it here as well posted the link twice.
+    const text = buildCaption(input.fields.builderNo, site, { includeUrl: false });
 
     // iOS/Safari popup blocker: window.open() is only honoured while the click's
     // user activation is alive, and any `await` before it loses that. So claim
